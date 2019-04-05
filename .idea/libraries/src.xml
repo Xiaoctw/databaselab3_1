@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="src">
+    <CLASSES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/../java-algorithms-implementation-master.zip!/java-algorithms-implementation-master/src" />
+      <root url="jar://$PROJECT_DIR$/../java-algorithms-implementation-master.zip!/java-algorithms-implementation-master/test" />
+    </SOURCES>
+  </library>
+</component>
