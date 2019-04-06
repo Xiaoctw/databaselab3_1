@@ -15,11 +15,6 @@ public class Main {
         String password=args[1];
         Class.forName(JDBC_DRIVER);
         Connection connection=DriverManager.getConnection(DB_URL,user,password);
-      //  DeleteMethod.DeleteEmail(connection,"12345678");
-       // DeleteMethod.DeleteExperience(connection,"han");
-      //  DeleteMethod.DeleteFriend(connection,"xiao","wang");
-     //   DeleteMethod.DeleteLog(connection,5);
-     //   DeleteMethod.DeleteShareLog(connection,1);
         DeleteMethod.DeleteUser(connection,"del");
     }
 
