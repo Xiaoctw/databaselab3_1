@@ -1,5 +1,6 @@
 package com.company;
 
+import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -7,11 +8,11 @@ import java.sql.*;
 import java.util.*;
 
 public class SelectMethods {
-    static final String JDBC_DRIVER="com.mysql.jdbc.Driver";
-    static final String DB_URL="jdbc:mysql://localhost:3306/socialnetwork";
-    String user="root";
-    String password="98a-042-b-6";
-    Connection connection=null;
+    private static final String JDBC_DRIVER="com.mysql.jdbc.Driver";
+    private static final String DB_URL="jdbc:mysql://localhost:3306/socialnetwork";
+    private String user="root";
+    private String password="*************";
+    private Connection connection=null;
     @Before
     public void init() throws SQLException, ClassNotFoundException {
         Class.forName(JDBC_DRIVER);
@@ -23,7 +24,7 @@ public class SelectMethods {
      * @return
      */
     static List<String> SelectEmail(Connection connection,String user){
-        String sql="select emailAddr from user,email where user.userName=email.userName and user.userName=?;";
+        String sql="select emailAddr from email where email.userName=?;";
         List<String> list=new ArrayList<>();
         try {
             PreparedStatement ps=connection.prepareStatement(sql);
@@ -32,7 +33,12 @@ public class SelectMethods {
             while (res.next()){
                 list.add(res.getString(1));
             }
-        } catch (SQLException e) {
+        }
+        catch (MySQLIntegrityConstraintViolationException e){
+//            if (e.toString().contains("a foreign key constraint fails")){//查询的时候不会报这个错
+//                System.out.println("出现错误,请检查当前好友是否已经添加或者当前分组是否存在");
+//            }
+        }catch (SQLException e) {
             e.printStackTrace();
         }
         return list;
@@ -46,7 +52,7 @@ public class SelectMethods {
     }
 
     /**
-     * 查找一个用户的朋友和分组
+     * 查找一个用户的朋友和分组,如果没有分组就返回NULL
      * @param connection 连接
      * @param user 用户
      * @return
@@ -136,7 +142,7 @@ public class SelectMethods {
     }
 
     /**
-     * 查询每个分组中人数
+     * 查询每个分组中人数,指定用户
      * @param connection
      * @return
      */

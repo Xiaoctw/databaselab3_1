@@ -1,7 +1,5 @@
 package com.company;
 
-import org.omg.CORBA.INTERNAL;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -26,7 +24,7 @@ public class DeleteMethod {
     }
 
     /**
-     * 删除某个人的
+     * 删除某个人的经历
      * @param connection 一个连接
      * @param user 一个用户
      */
@@ -42,11 +40,14 @@ public class DeleteMethod {
 
     /**
      * 把friend从user的好友表中删除
+     * 同时在FG关系中删除friend
      * @param user 一个用户
      * @param friend 好友名称
      */
     static void DeleteFriend(Connection connection,String user,String friend){
         try {
+            PreparedStatement preparedStatement=connection.prepareStatement("start transaction ");
+            preparedStatement.execute();
             PreparedStatement ps=connection.prepareStatement("set FOREIGN_KEY_CHECKS =0");
             ps.executeUpdate();
             String sql1="delete from friend where userName=? and friendName=?";
@@ -71,14 +72,18 @@ public class DeleteMethod {
             }
             PreparedStatement ps4=connection.prepareStatement("set FOREIGN_KEY_CHECKS =1");
             ps4.executeUpdate();
+            PreparedStatement exit=connection.prepareStatement("commit ");
+            exit.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
 
     }
     static void DeleteLog(Connection connection,int log_id){
-        PreparedStatement ps= null;
+        PreparedStatement ps;
         try {
+            PreparedStatement begin=connection.prepareStatement("start transaction ");
+            begin.execute();
             //首先去除外键依赖
             ps = connection.prepareStatement("set FOREIGN_KEY_CHECKS =0");
             ps.executeUpdate();
@@ -97,23 +102,26 @@ public class DeleteMethod {
             ps3.executeUpdate();
             PreparedStatement ps4=connection.prepareStatement("set FOREIGN_KEY_CHECKS =1");
             ps4.executeUpdate();
+            PreparedStatement exit=connection.prepareStatement("commit ");
+            exit.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-    static void DeleteShareLog(Connection connection,int log_id){
-        String sql="delete from shareLog where logID=?";
-        try {
-            PreparedStatement preparedStatement=connection.prepareStatement(sql);
-            preparedStatement.setInt(1,log_id);
-            preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
+
+    /**
+     * 删除一个用户的时候采用事物管理的方法,避免删除一半出现错误
+     * @param connection
+     * @param user
+     */
     static void DeleteUser(Connection connection,String user){
         List<Integer> groupIDs=getGroupIDs(connection,user);
         try {
+            PreparedStatement preparedStatement=connection.prepareStatement("start transaction ");
+            preparedStatement.execute();
+            PreparedStatement preparedStatement2=connection.prepareStatement("delete from experience where userName=?");
+            preparedStatement2.setString(1,user);
+            preparedStatement2.execute();
             PreparedStatement ps1=connection.prepareStatement("set FOREIGN_KEY_CHECKS =0");
             ps1.execute();
             String sql2="delete from user where userName=?";
@@ -142,17 +150,22 @@ public class DeleteMethod {
             for (Integer logId : logIds) {
                 DeleteLog(connection,logId);
             }
+            PreparedStatement preparedStatement3=connection.prepareStatement("delete from email where userName=?");
+            preparedStatement3.setString(1,user);
+            preparedStatement3.execute();
             PreparedStatement ps7=connection.prepareStatement("set FOREIGN_KEY_CHECKS =1");
             ps7.execute();
+            PreparedStatement preparedStatement1=connection.prepareStatement("commit ");
+            preparedStatement1.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
-    static List<Integer> getGroupIDs(Connection connection,String user){
+    private static List<Integer> getGroupIDs(Connection connection, String user){
         String sql="select groupID from friendGroup where userName=?";
         return getIntegers(connection, user, sql);
     }
-    static List<Integer> getLogIDs(Connection connection,String user){
+    private static List<Integer> getLogIDs(Connection connection, String user){
         String sql="select logID from Log where userName=?";
         return getIntegers(connection, user, sql);
     }

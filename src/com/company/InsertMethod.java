@@ -64,7 +64,6 @@ class InsertMethod {
             }else {
                 System.out.println("当前邮箱已经绑定用户!");
             }
-            //System.out.println(e);
         }catch (SQLException e) {
             e.printStackTrace();
         }
@@ -145,7 +144,12 @@ class InsertMethod {
             }
             statement.executeUpdate();
         }catch (MySQLIntegrityConstraintViolationException e){
-            System.out.println("当前用户不存在");
+          //  e.printStackTrace();
+            if (e.toString().contains("PRIMARY")){
+                System.out.println("当前用户已经添加信息");
+            }else {
+                System.out.println("当前用户不存在");
+            }
         }catch (SQLException e) {
             e.printStackTrace();
         }
@@ -153,27 +157,26 @@ class InsertMethod {
     /**
      * 该函数的作用是给指定用户添加朋友信息
      */
-    static void InsertIntoFriends(Connection connection,String user) throws SQLException {
+    static void InsertIntoFriends(Connection connection,String user){
         Scanner in=new Scanner(System.in);
         System.out.println("请输入"+user+"好友的姓名:(空格分隔开)");
         String users=in.nextLine();
         String[] friends=users.split(" ");
         String sql="insert into friend values (?,?)";
-        try {
-            PreparedStatement ps=connection.prepareStatement(sql);
-            for (String friend : friends) {
+        for (String friend : friends) {
+            try {
+                PreparedStatement ps=connection.prepareStatement(sql);
                 ps.setString(1,friend);
                 ps.setString(2,user);
                 ps.executeUpdate();
+            }catch (SQLException e){
+                if (e.toString().contains("a foreign key constraint fails")){
+                    System.out.println("出现错误,请检查当前用户是否已经添加!");
+                } //  System.out.println("出现错误,当前好友关系已经添加过!");
+
             }
-        }catch (MySQLIntegrityConstraintViolationException e){
-            if (e.toString().contains("a foreign key constraint fails")){
-                System.out.println("出现错误,请检查当前用户是否已经添加!");
-            }else {
-                System.out.println("出现错误,当前好友关系已经添加过!");
-            }
-         //   System.out.println(e.toString());
         }
+
     }
 
     /**
@@ -183,12 +186,8 @@ class InsertMethod {
      */
     static void InsertIntoGroups(Connection connection,String user,int GROUP_ID){
         Scanner in=new Scanner(System.in);
-        while(true) {
-            System.out.println("请输入分组的名称:(输入exit停止)");
-            String name = in.nextLine();
-            if(name.equals("exit")){
-                break;
-            }
+            System.out.println("请输入分组的名称:");
+            String name = in.next();
             String sql = "insert into friendGroup values (?,?,?)";
             try {
                 PreparedStatement ps = connection.prepareStatement(sql);
@@ -196,10 +195,15 @@ class InsertMethod {
                 ps.setInt(2, GROUP_ID);
                 ps.setString(3, name);
                 ps.executeUpdate();
-                GROUP_ID++;
-            } catch (SQLException ignored) {
+              //  GROUP_ID++;
+            }catch (MySQLIntegrityConstraintViolationException e){
+                if (e.toString().contains("a foreign key constraint fails")){
+                    System.out.println("出现错误,请检查当前好友是否已经添加或者当前分组是否存在");
+                }
             }
-        }
+            catch (SQLException ignored) {
+            }
+
     }
     static void InsertIntoFG(Connection connection,String friendName,int groupID){
         Scanner in=new Scanner(System.in);
@@ -241,7 +245,6 @@ class InsertMethod {
             }
             ps.setInt(4,logId);
             ps.executeUpdate();
-           // logId++;
         }catch(MySQLIntegrityConstraintViolationException e) {
             System.out.println(e);
             if (e.toString().contains("a foreign key constraint fails")){
@@ -253,7 +256,6 @@ class InsertMethod {
     }
     static void InsertIntoReply(Connection connection,int replyId,int replyedId){
         String sql="insert into reply (replyedID, replyID) values (?,?);";
-
         try {
             PreparedStatement ps=connection.prepareStatement(sql);
             ps.setInt(1,replyedId);
@@ -284,7 +286,7 @@ class InsertMethod {
             ps.setString(2,user);
             ps.setString(3,time);
             ps.setString(5,time);
-            if(!content.equals("")){
+            if(content.equals("")){
                 ps.setNull(4,Types.VARCHAR);
             }else {
                 ps.setString(4,content);
